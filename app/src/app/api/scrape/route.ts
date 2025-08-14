@@ -27,11 +27,14 @@ export async function POST(request: NextRequest) {
     console.log(`📁 Output file: ${outputFile}`)
     console.log(`🐍 Python path: ${path.join(scraperDir, 'venv', 'bin', 'python')}`)
 
+    // Clean the query to prevent encoding issues
+    const cleanQuery = query.trim().replace(/\+$/, '').replace(/\s+/g, ' ')
+    
     // Run the Python scraper with virtual environment
     const venvPython = path.join(scraperDir, 'venv', 'bin', 'python')
     const pythonProcess = spawn(venvPython, [
       'scrape_practices.py',
-      '--query', query,
+      '--query', cleanQuery,
       '--location', location,
       '--limit', limit.toString(),
       '--out', outputFile
@@ -90,19 +93,33 @@ export async function POST(request: NextRequest) {
       for (const line of lines) {
         const leadData = JSON.parse(line)
         
-        // Create or find company
+        // Create or find company with enhanced data
         const company = await prisma.company.upsert({
           where: { name: leadData.company },
           update: {
             website: leadData.website,
             phone: leadData.phone,
-            address: leadData.address
+            address: leadData.address,
+            hours: leadData.hours,
+            description: leadData.description,
+            services: leadData.services ? JSON.stringify(leadData.services) : null,
+            rating: leadData.rating,
+            reviews: leadData.reviews,
+            yearsInBusiness: leadData.years_in_business,
+            googleGuaranteed: leadData.google_guaranteed || false
           },
           create: {
             name: leadData.company,
             website: leadData.website,
             phone: leadData.phone,
-            address: leadData.address
+            address: leadData.address,
+            hours: leadData.hours,
+            description: leadData.description,
+            services: leadData.services ? JSON.stringify(leadData.services) : null,
+            rating: leadData.rating,
+            reviews: leadData.reviews,
+            yearsInBusiness: leadData.years_in_business,
+            googleGuaranteed: leadData.google_guaranteed || false
           }
         })
 

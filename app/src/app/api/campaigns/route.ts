@@ -4,7 +4,15 @@ import slugify from "slugify";
 import { DEFAULT_STEPS } from "@/lib/templates";
 
 export async function GET() {
-  const items = await prisma.campaign.findMany({ include: { steps: true } });
+  const items = await prisma.campaign.findMany({ 
+    include: { 
+      steps: true,
+      enrollments: {
+        include: { lead: true }
+      }
+    },
+    orderBy: { createdAt: 'desc' }
+  });
   return NextResponse.json(items);
 }
 

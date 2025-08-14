@@ -22,7 +22,16 @@ const businessTypes = [
   "coffee shop", "hair salon", "nail salon", "massage therapist",
   "physical therapist", "optometrist", "dermatologist", "pediatrician",
   "real estate agent", "insurance agent", "accountant", "lawyer",
-  "plumber", "electrician", "contractor", "landscaper"
+  "plumber", "electrician", "contractor", "landscaper", "architect",
+  "interior designer", "photographer", "wedding planner", "caterer",
+  "bakery", "florist", "gym", "yoga studio", "martial arts", "dance studio",
+  "music teacher", "tutoring service", "daycare", "preschool", "driving school",
+  "auto mechanic", "tire shop", "car dealership", "moving company",
+  "cleaning service", "home inspector", "HVAC", "roofing contractor",
+  "painting contractor", "flooring contractor", "handyman service",
+  "pool service", "pest control", "security service", "locksmith",
+  "appliance repair", "computer repair", "cell phone repair",
+  "jewelry store", "watch repair", "alterations", "dry cleaner"
 ]
 
 export function ScrapeForm() {
@@ -103,29 +112,44 @@ export function ScrapeForm() {
                   value={query}
                   onChange={(e) => {
                     setQuery(e.target.value)
-                    setShowSuggestions(e.target.value.length > 0)
+                    setShowSuggestions(true)
                   }}
-                  onFocus={() => setShowSuggestions(query.length > 0)}
+                  onFocus={() => setShowSuggestions(true)}
                   onBlur={() => setTimeout(() => setShowSuggestions(false), 150)}
                   required
                 />
                 {showSuggestions && (
-                  <div className="absolute z-10 w-full bg-background border border-border rounded-md shadow-lg max-h-40 overflow-y-auto">
+                  <div className="absolute z-10 w-full bg-background border border-border rounded-md shadow-lg max-h-60 overflow-y-auto">
                     {businessTypes
-                      .filter(type => type.toLowerCase().includes(query.toLowerCase()))
-                      .slice(0, 8)
+                      .filter(type => query === "" || type.toLowerCase().includes(query.toLowerCase()))
+                      .slice(0, 20)
                       .map((type) => (
                         <div
                           key={type}
-                          className="px-3 py-2 hover:bg-muted cursor-pointer text-sm"
+                          className="px-4 py-3 hover:bg-muted cursor-pointer text-sm border-b border-border last:border-b-0 transition-colors flex items-center space-x-2"
                           onClick={() => {
                             setQuery(type)
                             setShowSuggestions(false)
                           }}
                         >
-                          {type}
+                          <Building className="h-4 w-4 text-muted-foreground" />
+                          <span className="capitalize">{type}</span>
                         </div>
                       ))}
+                    {businessTypes.filter(type => type.toLowerCase().includes(query.toLowerCase())).length === 0 && (
+                      <div className="px-4 py-3 text-sm text-muted-foreground">
+                        No matches found. You can still use "{query}" as your search term.
+                      </div>
+                    )}
+                    {query && !businessTypes.includes(query.toLowerCase()) && (
+                      <div className="px-4 py-2 border-t border-border bg-muted/50">
+                        <div className="text-xs text-muted-foreground mb-1">Custom search term:</div>
+                        <div className="flex items-center space-x-2 text-sm font-medium">
+                          <Search className="h-4 w-4" />
+                          <span>"{query}"</span>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
@@ -145,11 +169,25 @@ export function ScrapeForm() {
               <Label htmlFor="limit">Number of Businesses</Label>
               <Input
                 id="limit"
-                type="number"
-                min="1"
-                max="100"
-                value={limit}
-                onChange={(e) => setLimit(parseInt(e.target.value) || 30)}
+                type="text"
+                placeholder="30"
+                value={limit === 0 ? '' : limit}
+                onChange={(e) => {
+                  const value = e.target.value.replace(/\D/g, '')
+                  if (value === '') {
+                    setLimit(0)
+                  } else {
+                    const num = parseInt(value)
+                    if (num >= 1 && num <= 100) {
+                      setLimit(num)
+                    }
+                  }
+                }}
+                onBlur={(e) => {
+                  if (limit === 0 || !limit) {
+                    setLimit(30)
+                  }
+                }}
               />
             </div>
 

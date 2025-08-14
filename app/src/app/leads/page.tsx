@@ -4,7 +4,8 @@ import { prisma } from "@/lib/prisma";
 import { ImportLeadsForm } from "@/components/forms";
 import { ScrapeForm } from "@/components/scrape-form";
 import { LeadsTable } from "@/components/leads-table";
-import { Plus, Users, Building, Mail, TrendingUp, Download, Upload } from "lucide-react";
+import { Plus, Users, Building, Mail, TrendingUp, Download } from "lucide-react";
+import { CleanupButton } from "@/components/cleanup-button";
 
 export default async function LeadsPage() {
   const leads = await prisma.lead.findMany({ 
@@ -32,6 +33,7 @@ export default async function LeadsPage() {
             <Download className="mr-2 h-4 w-4" />
             Export
           </Button>
+          <ImportLeadsForm />
           <Button>
             <Plus className="mr-2 h-4 w-4" />
             Add Lead
@@ -112,29 +114,18 @@ export default async function LeadsPage() {
       {/* Automated Scraping Section */}
       <ScrapeForm />
 
-      {/* Manual Import Section */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center">
-            <Upload className="mr-2 h-5 w-5" />
-            Manual Import
-          </CardTitle>
-          <CardDescription>
-            Import leads from existing JSONL files or manual entry
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <ImportLeadsForm />
-        </CardContent>
-      </Card>
-
       {/* Professional Leads Table */}
       <Card>
         <CardHeader>
-          <CardTitle>Lead Database</CardTitle>
-          <CardDescription>
-            All leads in your prospect database ({leads.length} total)
-          </CardDescription>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle>Lead Database</CardTitle>
+              <CardDescription>
+                All leads in your prospect database ({leads.length} total)
+              </CardDescription>
+            </div>
+            <CleanupButton />
+          </div>
         </CardHeader>
         <CardContent>
           {leads.length === 0 ? (

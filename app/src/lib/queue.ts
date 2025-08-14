@@ -1,11 +1,10 @@
-import { Queue, QueueScheduler, Worker, JobsOptions } from "bullmq";
+import { Queue, Worker, JobsOptions } from "bullmq";
 import IORedis from "ioredis";
 import { prisma } from "./prisma";
 import { sendMail } from "./mailer";
 
 const connection = new IORedis(process.env.REDIS_URL!);
 export const sendQueue = new Queue("send-queue", { connection });
-new QueueScheduler("send-queue", { connection });
 
 export type SendJob = { outboundEmailId: string };
 

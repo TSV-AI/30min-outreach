@@ -1,19 +1,41 @@
+"use client"
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { prisma } from "@/lib/prisma"
-import { NewCampaignForm } from "@/components/forms"
+import { CampaignBuilder } from "@/components/campaign-builder"
 import { Plus, Target, Users, Mail, Calendar, MoreHorizontal } from "lucide-react"
+import { useEffect, useState } from "react"
 
-export default async function CampaignsPage() {
-  const campaigns = await prisma.campaign.findMany({ 
-    include: { 
-      steps: true,
-      enrollments: {
-        include: { lead: true }
-      }
-    } 
-  })
+interface Campaign {
+  id: string
+  name: string
+  slug: string
+  createdAt: string
+  steps: { id: string }[]
+  enrollments: { id: string, lead: { id: string } }[]
+}
+
+export default function CampaignsPage() {
+  const [campaigns, setCampaigns] = useState<Campaign[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    fetch('/api/campaigns')
+      .then(res => res.json())
+      .then(data => {
+        setCampaigns(data)
+        setLoading(false)
+      })
+      .catch(error => {
+        console.error('Error fetching campaigns:', error)
+        setLoading(false)
+      })
+  }, [])
+
+  if (loading) {
+    return <div>Loading campaigns...</div>
+  }
 
   return (
     <div className="space-y-6">
@@ -96,17 +118,7 @@ export default async function CampaignsPage() {
       </div>
 
       {/* Create Campaign Section */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Create New Campaign</CardTitle>
-          <CardDescription>
-            Set up a new outreach campaign with automated sequences
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <NewCampaignForm />
-        </CardContent>
-      </Card>
+      <CampaignBuilder />
 
       {/* Campaigns List */}
       <div className="space-y-4">
@@ -120,7 +132,12 @@ export default async function CampaignsPage() {
               <p className="text-muted-foreground text-center mb-4">
                 Get started by creating your first outreach campaign
               </p>
-              <Button>
+              <Button 
+                onClick={() => {
+                  const campaignBuilder = document.querySelector('[data-campaign-builder]')
+                  campaignBuilder?.scrollIntoView({ behavior: 'smooth' })
+                }}
+              >
                 <Plus className="mr-2 h-4 w-4" />
                 Create Your First Campaign
               </Button>

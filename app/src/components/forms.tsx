@@ -2,7 +2,6 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 
 export function NewCampaignForm() {
   const [name, setName] = useState("");
@@ -20,67 +19,67 @@ export function NewCampaignForm() {
 }
 
 export function ImportLeadsForm() {
-  const [jsonl, setJsonl] = useState("");
   const [busy, setBusy] = useState(false);
-  const [lastResult, setLastResult] = useState<any>(null);
+  
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    
+    setBusy(true);
+    
+    try {
+      const text = await file.text();
+      let records: any[] = [];
+      
+      // Parse JSONL or JSON
+      if (text.trim().startsWith("[")) {
+        records = JSON.parse(text);
+      } else {
+        records = text.split(/\n+/).filter(Boolean).map(line => JSON.parse(line));
+      }
+      
+      const response = await fetch("/api/leads/import", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ records })
+      });
+      
+      const result = await response.json();
+      
+      if (result.count > 0) {
+        alert(`✅ Successfully imported ${result.count} leads${result.filtered > 0 ? ` (${result.filtered} filtered out)` : ''}`);
+        setTimeout(() => location.reload(), 1000);
+      } else {
+        alert(`No leads imported. ${result.filtered || 0} emails were filtered out.`);
+      }
+      
+    } catch (error) {
+      alert("Error processing file. Make sure it's valid JSON or JSONL format.");
+    } finally {
+      setBusy(false);
+    }
+  };
   
   return (
-    <div className="space-y-2">
-      <Textarea rows={6} placeholder='Paste JSONL or JSON array' value={jsonl} onChange={e=>setJsonl(e.target.value)} />
-      
-      <Button disabled={busy} onClick={async()=>{
-        setBusy(true);
-        setLastResult(null);
-        let records:any[]=[];
-        try {
-          if (jsonl.trim().startsWith("[")) records = JSON.parse(jsonl);
-          else records = jsonl.split(/\n+/).filter(Boolean).map(line=>JSON.parse(line));
-        } catch(e) { 
-          alert("Invalid JSON/JSONL"); 
-          setBusy(false); 
-          return; 
-        }
-        
-        const response = await fetch("/api/leads/import", { 
-          method: "POST", 
-          headers: {"Content-Type":"application/json"}, 
-          body: JSON.stringify({ records })
-        });
-        
-        const result = await response.json();
-        setLastResult(result);
-        setBusy(false);
-        
-        // Only reload if successful imports
-        if (result.count > 0) {
-          setTimeout(() => location.reload(), 2000);
-        }
-      }}>
-        {busy ? "Importing..." : "Import"}
+    <>
+      <input
+        type="file"
+        accept=".jsonl,.json"
+        onChange={handleFileUpload}
+        style={{ display: 'none' }}
+        id="import-file-input"
+        disabled={busy}
+      />
+      <Button 
+        variant="outline" 
+        disabled={busy}
+        onClick={() => document.getElementById('import-file-input')?.click()}
+      >
+        <svg className="mr-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+        </svg>
+        {busy ? "Importing..." : "Import File"}
       </Button>
-      
-      {lastResult && (
-        <div className="mt-4 p-3 bg-gray-50 rounded-md">
-          <div className="text-sm">
-            <div className="font-medium text-green-600">
-              ✅ {lastResult.count} leads imported successfully
-            </div>
-            {lastResult.filtered > 0 && (
-              <div className="mt-2 text-orange-600">
-                🚫 {lastResult.filtered} emails filtered out:
-                <ul className="mt-1 ml-4 text-xs">
-                  {lastResult.filteredDetails?.slice(0, 5).map((item: any, i: number) => (
-                    <li key={i}>• {item.email} - {item.reason}</li>
-                  ))}
-                  {lastResult.filteredDetails?.length > 5 && (
-                    <li>• ... and {lastResult.filteredDetails.length - 5} more</li>
-                  )}
-                </ul>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-    </div>
+    </>
   );
 }

@@ -13,7 +13,7 @@ import {
   getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table"
-import { ArrowUpDown, ChevronDown, MoreHorizontal, CheckCircle, Mail } from "lucide-react"
+import { ArrowUpDown, ChevronDown, MoreHorizontal, CheckCircle, Mail, Trash2 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -52,6 +52,13 @@ export type Lead = {
     website: string | null
     phone: string | null
     address: string | null
+    hours: string | null
+    description: string | null
+    services: string | null
+    rating: number | null
+    reviews: number | null
+    yearsInBusiness: number | null
+    googleGuaranteed: boolean
   }
 }
 
@@ -139,6 +146,76 @@ export const columns: ColumnDef<Lead>[] = [
         </div>
       </div>
     ),
+  },
+  {
+    id: "phone",
+    accessorFn: (row) => row.company.phone,
+    header: "Phone",
+    cell: ({ row }) => (
+      <div className="text-sm">
+        {row.original.company.phone || <span className="text-muted-foreground">—</span>}
+      </div>
+    ),
+  },
+  {
+    id: "address",
+    accessorFn: (row) => row.company.address,
+    header: "Location",
+    cell: ({ row }) => (
+      <div className="text-sm max-w-[200px] truncate">
+        {row.original.company.address || <span className="text-muted-foreground">—</span>}
+      </div>
+    ),
+  },
+  {
+    id: "rating",
+    accessorFn: (row) => row.company.rating,
+    header: "Rating",
+    cell: ({ row }) => {
+      const rating = row.original.company.rating;
+      const reviews = row.original.company.reviews;
+      const googleGuaranteed = row.original.company.googleGuaranteed;
+      
+      if (!rating) return <span className="text-muted-foreground text-sm">—</span>;
+      
+      return (
+        <div className="space-y-1">
+          <div className="flex items-center space-x-1">
+            <span className="text-sm font-medium">⭐ {rating}</span>
+            {reviews && <span className="text-xs text-muted-foreground">({reviews})</span>}
+          </div>
+          {googleGuaranteed && (
+            <Badge variant="default" className="text-xs bg-blue-100 text-blue-800">
+              Google Guaranteed
+            </Badge>
+          )}
+        </div>
+      );
+    },
+  },
+  {
+    id: "business_info",
+    accessorFn: (row) => row.company.yearsInBusiness,
+    header: "Business",
+    cell: ({ row }) => {
+      const years = row.original.company.yearsInBusiness;
+      const hours = row.original.company.hours;
+      
+      return (
+        <div className="space-y-1">
+          {years && (
+            <div className="text-xs text-muted-foreground">
+              {years} year{years !== 1 ? 's' : ''} in business
+            </div>
+          )}
+          {hours && (
+            <div className="text-xs text-muted-foreground max-w-[150px] truncate">
+              {hours}
+            </div>
+          )}
+        </div>
+      );
+    },
   },
   {
     accessorKey: "status",
@@ -276,6 +353,33 @@ const verifyEmailsBulk = async (leadIds: string[]) => {
   }
 }
 
+const deleteLeadsBulk = async (leadIds: string[]) => {
+  if (!confirm(`Are you sure you want to delete ${leadIds.length} lead${leadIds.length > 1 ? 's' : ''}? This action cannot be undone.`)) {
+    return
+  }
+
+  try {
+    const response = await fetch('/api/leads/bulk-delete', {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ leadIds }),
+    })
+    
+    if (response.ok) {
+      // Refresh the page to show updated leads
+      window.location.reload()
+    } else {
+      const errorData = await response.json()
+      alert(`Error deleting leads: ${errorData.error}`)
+    }
+  } catch (error) {
+    console.error('Error deleting leads:', error)
+    alert('Error deleting leads. Please try again.')
+  }
+}
+
 export function LeadsTable({ data }: LeadsTableProps) {
   const [sorting, setSorting] = React.useState<SortingState>([])
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
@@ -315,6 +419,19 @@ export function LeadsTable({ data }: LeadsTableProps) {
           }
           className="max-w-sm"
         />
+        {selectedRows.length > 0 && (
+          <Button
+            onClick={() => {
+              const leadIds = selectedRows.map(row => row.original.id)
+              deleteLeadsBulk(leadIds)
+            }}
+            className="ml-4"
+            variant="destructive"
+          >
+            <Trash2 className="mr-2 h-4 w-4" />
+            Delete {selectedRows.length} Lead{selectedRows.length > 1 ? 's' : ''}
+          </Button>
+        )}
         {unverifiedSelectedLeads.length > 0 && (
           <Button
             onClick={() => {

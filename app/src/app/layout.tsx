@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "../styles/globals.css";
 import { DashboardLayout } from "@/components/dashboard-layout";
+import { Toaster } from "sonner";
 
 export const metadata: Metadata = {
   title: "VoiceAI Outreach",
@@ -16,6 +17,7 @@ export default function RootLayout({
     <html lang="en" className="dark">
       <body>
         <DashboardLayout>{children}</DashboardLayout>
+        <Toaster />
       </body>
     </html>
   );
