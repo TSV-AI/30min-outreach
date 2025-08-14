@@ -6,6 +6,58 @@ from bs4 import BeautifulSoup
 SERPAPI_KEY = os.getenv("SERPAPI_KEY")
 EMAIL_RE = re.compile(r"[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}", re.I)
 
+# Email filtering - same logic as frontend EmailValidator
+ROLE_BASED_PREFIXES = [
+    'info', 'contact', 'support', 'help', 'sales', 'admin', 'administrator',
+    'webmaster', 'postmaster', 'abuse', 'noreply', 'no-reply', 'donotreply',
+    'marketing', 'team', 'hello', 'hi', 'general', 'office', 'reception',
+    'inquiry', 'inquiries', 'service', 'services', 'customerservice', 
+    'customer-service', 'billing', 'accounts', 'hr', 'humanresources',
+    'jobs', 'careers', 'press', 'media', 'legal', 'compliance', 'privacy'
+]
+
+DISPOSABLE_DOMAINS = [
+    '10minutemail.com', 'guerrillamail.com', 'mailinator.com', 'tempmail.org',
+    'throwaway.email', '7days-a-week.com', 'yopmail.com', 'temp-mail.org',
+    'getairmail.com', 'emailondeck.com', 'fakeinbox.com'
+]
+
+def is_good_email(email):
+    """Filter out problematic emails before they get saved"""
+    if not email or not isinstance(email, str):
+        return False, "Invalid email format"
+    
+    email_lower = email.lower().strip()
+    
+    # Basic format check
+    if not EMAIL_RE.match(email_lower):
+        return False, "Invalid email format"
+    
+    local_part, domain = email_lower.split('@', 1)
+    
+    # Filter role-based emails
+    if local_part in ROLE_BASED_PREFIXES:
+        return False, f"Role-based email ({local_part}@)"
+    
+    # Filter disposable domains
+    if domain in DISPOSABLE_DOMAINS:
+        return False, "Disposable email domain"
+    
+    # Filter suspicious patterns
+    if (local_part.startswith('test') or 
+        local_part.startswith('demo') or 
+        local_part.startswith('sample') or
+        '+' in local_part or
+        len(local_part) <= 2):
+        return False, "Suspicious email pattern"
+    
+    # Filter file extensions
+    file_extensions = ['.jpg', '.png', '.gif', '.pdf', '.doc', '.txt', '.html', '.css', '.js']
+    if any(ext in email_lower for ext in file_extensions):
+        return False, "File extension detected"
+    
+    return True, "Valid"
+
 # ---- helpers ----
 
 def serpapi_gmaps(query, location, num=20):
@@ -57,7 +109,21 @@ def fetch(url):
 
 def harvest_emails(site):
     emails = set(EMAIL_RE.findall(site or ""))
-    return {e.lower() for e in emails if not e.lower().endswith((".png", ".jpg"))}
+    good_emails = []
+    filtered_count = 0
+    
+    for email in emails:
+        is_valid, reason = is_good_email(email)
+        if is_valid:
+            good_emails.append(email.lower())
+        else:
+            filtered_count += 1
+            print(f"🚫 Filtered: {email} - {reason}")
+    
+    if filtered_count > 0:
+        print(f"📊 Email filtering: {len(good_emails)} good, {filtered_count} filtered")
+    
+    return good_emails
 
 
 def crawl_site(base_url):
@@ -131,8 +197,10 @@ def main():
                 total_leads += 1
                 print(f"✅ Lead #{total_leads}: {e} @ {company_name}")
     
-    print(f"🎉 Completed! Total leads found: {total_leads}")
-    print(f"Wrote {args.out}")
+    print(f"🎉 Scraping completed!")
+    print(f"✅ Total quality leads found: {total_leads}")
+    print(f"📄 Saved to: {args.out}")
+    print(f"💡 All emails were pre-filtered for quality (no role-based, disposable, or suspicious emails)")
 
 if __name__ == "__main__":
     main()
