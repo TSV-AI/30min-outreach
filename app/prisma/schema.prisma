@@ -1,0 +1,104 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Company {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  website   String?
+  phone     String?
+  address   String?
+  city      String?
+  state     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  leads     Lead[]
+}
+
+model Lead {
+  id           String        @id @default(cuid())
+  companyId    String
+  company      Company       @relation(fields: [companyId], references: [id])
+  contactName  String?
+  role         String?
+  email        String
+  source       String
+  status       LeadStatus    @default(NEW)
+  unsubscribed Boolean       @default(false)
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  emails       OutboundEmail[]
+  enrollments  Enrollment[]
+}
+
+enum LeadStatus {
+  NEW
+  QUEUED
+  CONTACTED
+  REPLIED
+  BOUNCED
+  UNSUBSCRIBED
+}
+
+model Campaign {
+  id          String         @id @default(cuid())
+  name        String
+  slug        String         @unique
+  niche       String?
+  city        String?
+  state       String?
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+  steps       SequenceStep[]
+  enrollments Enrollment[]
+}
+
+model SequenceStep {
+  id         String   @id @default(cuid())
+  campaignId String
+  campaign   Campaign @relation(fields: [campaignId], references: [id])
+  dayOffset  Int
+  subject    String
+  bodyHtml   String
+}
+
+model Enrollment {
+  id         String   @id @default(cuid())
+  leadId     String
+  lead       Lead     @relation(fields: [leadId], references: [id])
+  campaignId String
+  campaign   Campaign @relation(fields: [campaignId], references: [id])
+  startDate  DateTime @default(now())
+}
+
+model OutboundEmail {
+  id         String      @id @default(cuid())
+  leadId     String
+  lead       Lead        @relation(fields: [leadId], references: [id])
+  campaignId String?
+  stepId     String?
+  sentAt     DateTime?
+  status     EmailStatus @default(PENDING)
+  messageId  String?
+  subject    String
+  bodyHtml   String
+  trackId    String      @unique
+}
+
+enum EmailStatus {
+  PENDING
+  SENT
+  BOUNCED
+  FAILED
+  OPENED
+  REPLIED
+  UNSUBSCRIBED
+}

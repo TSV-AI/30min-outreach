@@ -1,0 +1,39 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+ 
+@layer base {
+  :root {
+    /* Dark theme using custom palette */
+    --background: 210 13% 13%; /* slate_gray-200 */
+    --foreground: 210 40% 98%; /* seasalt-900 */
+    --card: 210 15% 15%; /* slate_gray-200 slightly lighter */
+    --card-foreground: 210 40% 98%; /* seasalt-900 */
+    --popover: 210 15% 15%; /* slate_gray-200 */
+    --popover-foreground: 210 40% 98%; /* seasalt-900 */
+    --primary: 200 22% 69%; /* powder_blue */
+    --primary-foreground: 210 13% 13%; /* slate_gray-200 */
+    --secondary: 180 12% 45%; /* slate_gray */
+    --secondary-foreground: 210 40% 98%; /* seasalt-900 */
+    --muted: 210 15% 18%; /* slate_gray-300 */
+    --muted-foreground: 180 8% 65%; /* slate_gray-700 */
+    --accent: 180 12% 45%; /* slate_gray */
+    --accent-foreground: 210 40% 98%; /* seasalt-900 */
+    --destructive: 0 62% 50%; /* red tone */
+    --destructive-foreground: 210 40% 98%; /* seasalt-900 */
+    --border: 210 15% 18%; /* slate_gray-300 */
+    --input: 210 15% 18%; /* slate_gray-300 */
+    --ring: 200 22% 69%; /* powder_blue */
+    --radius: 0.5rem;
+  }
+}
+ 
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-slate_gray-200 text-seasalt-900;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  }
+}
