@@ -79,7 +79,8 @@ export const columns: ColumnDef<Lead>[] = [
     enableHiding: false,
   },
   {
-    accessorKey: "company.name",
+    id: "company",
+    accessorFn: (row) => row.company.name,
     header: ({ column }) => {
       return (
         <Button
@@ -308,9 +309,9 @@ export function LeadsTable({ data }: LeadsTableProps) {
       <div className="flex items-center py-4">
         <Input
           placeholder="Filter by company name..."
-          value={(table.getColumn("company.name")?.getFilterValue() as string) ?? ""}
+          value={(table.getColumn("company")?.getFilterValue() as string) ?? ""}
           onChange={(event) =>
-            table.getColumn("company.name")?.setFilterValue(event.target.value)
+            table.getColumn("company")?.setFilterValue(event.target.value)
           }
           className="max-w-sm"
         />
