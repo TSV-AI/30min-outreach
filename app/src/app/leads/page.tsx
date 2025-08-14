@@ -1,10 +1,10 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { prisma } from "@/lib/prisma";
 import { ImportLeadsForm } from "@/components/forms";
 import { ScrapeForm } from "@/components/scrape-form";
-import { Plus, Users, Building, Mail, TrendingUp, Download, Upload, Search } from "lucide-react";
+import { LeadsTable } from "@/components/leads-table";
+import { Plus, Users, Building, Mail, TrendingUp, Download, Upload } from "lucide-react";
 
 export default async function LeadsPage() {
   const leads = await prisma.lead.findMany({ 
@@ -128,7 +128,7 @@ export default async function LeadsPage() {
         </CardContent>
       </Card>
 
-      {/* Leads Table */}
+      {/* Professional Leads Table */}
       <Card>
         <CardHeader>
           <CardTitle>Lead Database</CardTitle>
@@ -150,70 +150,7 @@ export default async function LeadsPage() {
               </Button>
             </div>
           ) : (
-            <div className="space-y-4">
-              {/* Table Header */}
-              <div className="grid grid-cols-5 gap-4 text-sm font-medium text-muted-foreground border-b pb-2">
-                <div>Company</div>
-                <div>Contact</div>
-                <div>Status</div>
-                <div>Source</div>
-                <div>Added</div>
-              </div>
-
-              {/* Table Rows */}
-              <div className="space-y-2">
-                {leads.slice(0, 50).map((lead) => (
-                  <div key={lead.id} className="grid grid-cols-5 gap-4 items-center py-3 border-b border-border/50 hover:bg-muted/50 rounded-sm px-2">
-                    <div className="space-y-1">
-                      <p className="font-medium">{lead.company.name}</p>
-                      {lead.company.website && (
-                        <p className="text-xs text-muted-foreground">{lead.company.website}</p>
-                      )}
-                    </div>
-                    
-                    <div className="space-y-1">
-                      <p className="text-sm">{lead.email}</p>
-                      {lead.contactName && (
-                        <p className="text-xs text-muted-foreground">{lead.contactName}</p>
-                      )}
-                    </div>
-
-                    <div>
-                      <Badge 
-                        variant={
-                          lead.status === 'NEW' ? 'default' :
-                          lead.status === 'CONTACTED' ? 'secondary' :
-                          lead.status === 'REPLIED' ? 'default' :
-                          lead.status === 'UNSUBSCRIBED' ? 'destructive' :
-                          'outline'
-                        }
-                        className="text-xs"
-                      >
-                        {lead.status}
-                      </Badge>
-                    </div>
-
-                    <div>
-                      <Badge variant="outline" className="text-xs">
-                        {lead.source}
-                      </Badge>
-                    </div>
-
-                    <div className="text-sm text-muted-foreground">
-                      {new Date(lead.createdAt).toLocaleDateString()}
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              {leads.length > 50 && (
-                <div className="text-center pt-4">
-                  <Button variant="outline">
-                    Load More ({leads.length - 50} remaining)
-                  </Button>
-                </div>
-              )}
-            </div>
+            <LeadsTable data={leads} />
           )}
         </CardContent>
       </Card>

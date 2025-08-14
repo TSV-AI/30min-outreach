@@ -24,19 +24,21 @@ model Company {
 }
 
 model Lead {
-  id           String        @id @default(cuid())
-  companyId    String
-  company      Company       @relation(fields: [companyId], references: [id])
-  contactName  String?
-  role         String?
-  email        String
-  source       String
-  status       LeadStatus    @default(NEW)
-  unsubscribed Boolean       @default(false)
-  createdAt    DateTime      @default(now())
-  updatedAt    DateTime      @updatedAt
-  emails       OutboundEmail[]
-  enrollments  Enrollment[]
+  id             String        @id @default(cuid())
+  companyId      String
+  company        Company       @relation(fields: [companyId], references: [id])
+  contactName    String?
+  role           String?
+  email          String
+  source         String
+  status         LeadStatus    @default(NEW)
+  emailStatus    EmailVerificationStatus @default(UNVERIFIED)
+  emailScore     Int?
+  unsubscribed   Boolean       @default(false)
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  emails         OutboundEmail[]
+  enrollments    Enrollment[]
 }
 
 enum LeadStatus {
@@ -46,6 +48,17 @@ enum LeadStatus {
   REPLIED
   BOUNCED
   UNSUBSCRIBED
+}
+
+enum EmailVerificationStatus {
+  UNVERIFIED
+  VALID
+  INVALID
+  CATCH_ALL
+  UNKNOWN
+  SPAMTRAP
+  ABUSE
+  DO_NOT_MAIL
 }
 
 model Campaign {

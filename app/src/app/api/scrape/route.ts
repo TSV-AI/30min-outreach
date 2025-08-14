@@ -16,11 +16,16 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    console.log(`🔍 Starting scrape: "${query}" in "${location}" (limit: ${limit})`)
+
     // Generate unique filename
     const timestamp = Date.now()
     const outputFile = `scrape_${timestamp}.jsonl`
-    const scraperDir = path.join(process.cwd(), '../../scraper')
+    const scraperDir = path.join(process.cwd(), '../scraper')
     const outputPath = path.join(scraperDir, outputFile)
+
+    console.log(`📁 Output file: ${outputFile}`)
+    console.log(`🐍 Python path: ${path.join(scraperDir, 'venv', 'bin', 'python')}`)
 
     // Run the Python scraper with virtual environment
     const venvPython = path.join(scraperDir, 'venv', 'bin', 'python')
@@ -42,31 +47,45 @@ export async function POST(request: NextRequest) {
     let stderr = ''
 
     pythonProcess.stdout.on('data', (data) => {
-      stdout += data.toString()
+      const output = data.toString()
+      stdout += output
+      console.log(`🐍 Python stdout: ${output.trim()}`)
     })
 
     pythonProcess.stderr.on('data', (data) => {
-      stderr += data.toString()
+      const error = data.toString()
+      stderr += error
+      console.log(`⚠️ Python stderr: ${error.trim()}`)
     })
+
+    console.log(`⏳ Waiting for scraper to complete...`)
 
     // Wait for scraper to complete
     const exitCode = await new Promise((resolve) => {
-      pythonProcess.on('close', resolve)
+      pythonProcess.on('close', (code) => {
+        console.log(`🐍 Python process exited with code: ${code}`)
+        resolve(code)
+      })
     })
 
     if (exitCode !== 0) {
-      console.error('Scraper failed:', stderr)
+      console.error('❌ Scraper failed:', stderr)
       return NextResponse.json(
-        { error: 'Scraping failed', details: stderr },
+        { error: 'Scraping failed', details: stderr, stdout },
         { status: 500 }
       )
     }
 
+    console.log(`✅ Scraper completed successfully`)
+
     // Read and process the results
     const results = []
     try {
+      console.log(`📖 Reading results from: ${outputPath}`)
       const fileContent = await fs.readFile(outputPath, 'utf-8')
       const lines = fileContent.trim().split('\n').filter(line => line.trim())
+      
+      console.log(`📊 Found ${lines.length} lead records to process`)
       
       for (const line of lines) {
         const leadData = JSON.parse(line)
@@ -83,8 +102,7 @@ export async function POST(request: NextRequest) {
             name: leadData.company,
             website: leadData.website,
             phone: leadData.phone,
-            address: leadData.address,
-            industry: query // Use the search query as industry
+            address: leadData.address
           }
         })
 

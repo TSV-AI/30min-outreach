@@ -16,6 +16,15 @@ interface ScrapeResult {
   website: string
 }
 
+const businessTypes = [
+  "dentist", "orthodontist", "chiropractor", "veterinarian", 
+  "personal injury lawyer", "auto repair shop", "restaurant", 
+  "coffee shop", "hair salon", "nail salon", "massage therapist",
+  "physical therapist", "optometrist", "dermatologist", "pediatrician",
+  "real estate agent", "insurance agent", "accountant", "lawyer",
+  "plumber", "electrician", "contractor", "landscaper"
+]
+
 export function ScrapeForm() {
   const [query, setQuery] = useState("")
   const [location, setLocation] = useState("")
@@ -24,6 +33,9 @@ export function ScrapeForm() {
   const [results, setResults] = useState<ScrapeResult[]>([])
   const [error, setError] = useState("")
   const [success, setSuccess] = useState("")
+  const [showSuggestions, setShowSuggestions] = useState(false)
+  const [progress, setProgress] = useState<string[]>([])
+  const [currentProgress, setCurrentProgress] = useState("")
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -31,6 +43,8 @@ export function ScrapeForm() {
     setError("")
     setSuccess("")
     setResults([])
+    setProgress([])
+    setCurrentProgress("")
 
     try {
       const response = await fetch('/api/scrape', {
@@ -81,15 +95,39 @@ export function ScrapeForm() {
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
+              <div className="space-y-2 relative">
                 <Label htmlFor="query">Business Type</Label>
                 <Input
                   id="query"
                   placeholder="e.g., dentist, orthodontist, chiropractor"
                   value={query}
-                  onChange={(e) => setQuery(e.target.value)}
+                  onChange={(e) => {
+                    setQuery(e.target.value)
+                    setShowSuggestions(e.target.value.length > 0)
+                  }}
+                  onFocus={() => setShowSuggestions(query.length > 0)}
+                  onBlur={() => setTimeout(() => setShowSuggestions(false), 150)}
                   required
                 />
+                {showSuggestions && (
+                  <div className="absolute z-10 w-full bg-background border border-border rounded-md shadow-lg max-h-40 overflow-y-auto">
+                    {businessTypes
+                      .filter(type => type.toLowerCase().includes(query.toLowerCase()))
+                      .slice(0, 8)
+                      .map((type) => (
+                        <div
+                          key={type}
+                          className="px-3 py-2 hover:bg-muted cursor-pointer text-sm"
+                          onClick={() => {
+                            setQuery(type)
+                            setShowSuggestions(false)
+                          }}
+                        >
+                          {type}
+                        </div>
+                      ))}
+                  </div>
+                )}
               </div>
               <div className="space-y-2">
                 <Label htmlFor="location">Location</Label>
@@ -123,7 +161,7 @@ export function ScrapeForm() {
               {isLoading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Scraping... (this may take a few minutes)
+                  {currentProgress || "Starting scraper..."}
                 </>
               ) : (
                 <>
@@ -148,6 +186,28 @@ export function ScrapeForm() {
           <CheckCircle className="h-4 w-4" />
           <AlertDescription>{success}</AlertDescription>
         </Alert>
+      )}
+
+      {progress.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Scraping Progress</CardTitle>
+            <CardDescription>
+              Live updates from the scraper
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="bg-slate_gray-100 p-4 rounded-md max-h-60 overflow-y-auto">
+              <div className="space-y-1 font-mono text-sm">
+                {progress.map((line, index) => (
+                  <div key={index} className="text-seasalt-600">
+                    {line}
+                  </div>
+                ))}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       )}
 
       {results.length > 0 && (
