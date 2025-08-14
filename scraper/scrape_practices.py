@@ -109,13 +109,13 @@ def fetch(url):
 
 def harvest_emails(site):
     emails = set(EMAIL_RE.findall(site or ""))
-    good_emails = []
+    good_emails = set()
     filtered_count = 0
     
     for email in emails:
         is_valid, reason = is_good_email(email)
         if is_valid:
-            good_emails.append(email.lower())
+            good_emails.add(email.lower())
         else:
             filtered_count += 1
             print(f"🚫 Filtered: {email} - {reason}")
