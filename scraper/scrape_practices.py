@@ -13,7 +13,8 @@ ROLE_BASED_PREFIXES = [
     'marketing', 'team', 'hello', 'hi', 'general', 'office', 'reception',
     'inquiry', 'inquiries', 'service', 'services', 'customerservice', 
     'customer-service', 'billing', 'accounts', 'hr', 'humanresources',
-    'jobs', 'careers', 'press', 'media', 'legal', 'compliance', 'privacy'
+    'jobs', 'careers', 'press', 'media', 'legal', 'compliance', 'privacy',
+    'user', 'username', 'email', 'mail', 'example', 'test', 'demo'
 ]
 
 DISPOSABLE_DOMAINS = [
